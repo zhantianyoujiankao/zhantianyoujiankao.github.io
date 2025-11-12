@@ -1,0 +1,2776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高校监考自动排考系统</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), #2980b9);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1, h2, h3 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .btn-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .tab-container {
+            margin-top: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #f8f9fa;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background: white;
+            border: 2px solid #ddd;
+            border-bottom: none;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .teacher-list, .exam-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .teacher-item, .exam-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .teacher-item:last-child, .exam-item:last-child {
+            border-bottom: none;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        .badge-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .badge-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .badge-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .badge-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .badge-success {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .badge-tomorrow {
+            background-color: #ff6b6b;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .alert {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .flex-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .flex-row > div {
+            flex: 1;
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-item input {
+            width: auto;
+            margin-right: 8px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .replacement-section {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .option-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .option-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .option-item.selected {
+            background-color: #e3f2fd;
+            border-color: var(--primary);
+        }
+        
+        .replacement-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .replacement-tab {
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+        
+        .replacement-tab.active {
+            border-bottom: 2px solid var(--primary);
+            font-weight: bold;
+        }
+        
+        .replacement-content {
+            display: none;
+        }
+        
+        .replacement-content.active {
+            display: block;
+        }
+        
+        .manual-select {
+            margin-top: 15px;
+        }
+        
+        .manual-select select {
+            margin-top: 10px;
+        }
+        
+        .teacher-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .export-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .export-card h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .export-card p {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        
+        /* 首字母索引样式 */
+        .alphabet-index {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .alphabet-letter {
+            padding: 5px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            background-color: #e9ecef;
+            font-size: 14px;
+            min-width: 24px;
+            text-align: center;
+        }
+        
+        .alphabet-letter:hover {
+            background-color: #dee2e6;
+        }
+        
+        .alphabet-letter.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .teacher-group {
+            margin-bottom: 15px;
+        }
+        
+        .group-header {
+            padding: 5px 0;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--primary);
+            border-bottom: 1px solid #eee;
+        }
+        
+        .search-box {
+            margin-bottom: 10px;
+        }
+        
+        .date-note {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .past-exam-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .tomorrow-exam-notice {
+            background-color: #ffeaa7;
+            border: 1px solid #fdcb6e;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #e17055;
+        }
+        
+        .query-results {
+            margin-top: 20px;
+        }
+        
+        .query-section {
+            margin-bottom: 30px;
+        }
+        
+        .teacher-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .exam-record {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .exam-record h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .exam-record p {
+            margin: 3px 0;
+            color: #666;
+        }
+        
+        .teacher-count-badge {
+            display: inline-block;
+            background-color: var(--secondary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        
+        .teacher-count-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .teacher-count-info {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .teacher-count-info h3 {
+            margin-bottom: 10px;
+            color: #1976d2;
+        }
+        
+        .teacher-count-info p {
+            margin: 5px 0;
+            color: #555;
+        }
+        
+        /* 备份恢复相关样式 */
+        .backup-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .backup-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .backup-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .backup-card h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .backup-card p {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border: 1px dashed #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .file-input-label:hover {
+            background-color: #e9ecef;
+        }
+        
+        .backup-preview {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .backup-preview h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .backup-preview-item {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .backup-preview-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* 替换历史记录样式 */
+        .replacement-history {
+            margin-top: 20px;
+        }
+        
+        .history-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+        }
+        
+        .history-item h4 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .history-item p {
+            margin: 3px 0;
+            color: #666;
+        }
+        
+        /* 替换原因输入框样式 */
+        .replacement-reason {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        /* 部门输入样式 */
+        .department-input {
+            margin-bottom: 15px;
+        }
+        
+        /* 学期选择页面样式 */
+        .semester-selection {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .semester-card {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .semester-card h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        
+        .semester-card p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .current-semester-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--secondary), #27ae60);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        
+        /* 新增样式：已选教师标签 */
+        .selected-teachers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            min-height: 50px;
+        }
+        
+        .selected-teacher-tag {
+            display: inline-flex;
+            align-items: center;
+            background-color: var(--primary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .selected-teacher-tag .remove {
+            margin-left: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .flex-row {
+                flex-direction: column;
+            }
+            
+            .checkbox-group {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab {
+                margin-bottom: 5px;
+            }
+            
+            .export-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .alphabet-index {
+                gap: 3px;
+            }
+            
+            .alphabet-letter {
+                padding: 3px 6px;
+                font-size: 12px;
+                min-width: 20px;
+            }
+            
+            .teacher-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .teacher-count-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .teacher-count-badge {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+            
+            .backup-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>高校监考自动排考系统</h1>
+            <p>简化监考安排流程，实现公平合理的监考分配</p>
+        </header>
+
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="semester">学期选择</div>
+                <div class="tab" data-tab="teachers">教师管理</div>
+                <div class="tab" data-tab="exam-arrangement">监考安排</div>
+                <div class="tab" data-tab="exam-list">监考任务</div>
+                <div class="tab" data-tab="query">数据查询</div>
+                <div class="tab" data-tab="export">数据导出</div>
+            </div>
+
+            <!-- 学期选择 -->
+            <div class="tab-content active" id="semester">
+                <div class="semester-selection">
+                    <div class="semester-card">
+                        <h2>选择学期</h2>
+                        <p>请选择要管理的学期，每个学期的数据独立存储，互不影响</p>
+                        
+                        <div class="form-group">
+                            <label for="semester-select">选择学期</label>
+                            <select id="semester-select">
+                                <option value="25秋">2025年秋季学期</option>
+                                <option value="26春">2026年春季学期</option>
+                                <option value="26秋">2026年秋季学期</option>
+                                <option value="27春">2027年春季学期</option>
+                                <option value="27秋">2027年秋季学期</option>
+                                <option value="28春">2028年春季学期</option>
+                                <option value="28秋">2028年秋季学期</option>
+                                <option value="29春">2029年春季学期</option>
+                                <option value="29秋">2029年秋季学期</option>
+                                <option value="30春">2030年春季学期</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn-primary" onclick="selectSemester()">进入系统</button>
+                        
+                        <div id="current-semester-info" class="current-semester-badge" style="display: none;">
+                            当前学期: <span id="current-semester-name"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 教师管理 -->
+            <div class="tab-content" id="teachers">
+                <div class="card">
+                    <h2>教师库管理 - <span id="semester-indicator"></span></h2>
+                    
+                    <!-- 教师库统计信息 -->
+                    <div class="teacher-count-info">
+                        <h3>教师库统计</h3>
+                        <p><strong>教师总数：</strong><span id="teacher-total-count">0</span> 人</p>
+                        <p><strong>有监考记录教师：</strong><span id="teacher-with-records-count">0</span> 人</p>
+                        <p><strong>无监考记录教师：</strong><span id="teacher-without-records-count">0</span> 人</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="teacher-names">添加教师（每行一个姓名）</label>
+                        <textarea id="teacher-names" rows="5" placeholder="请输入教师姓名，每行一个"></textarea>
+                    </div>
+                    <button class="btn-primary" onclick="addTeachers()">批量添加教师</button>
+                    <button class="btn-danger" onclick="clearTeachers()">清空教师库</button>
+                </div>
+
+                <div class="card">
+                    <div class="teacher-count-header">
+                        <h2>教师列表</h2>
+                        <div class="teacher-count-badge">共 <span id="teacher-list-count">0</span> 名教师</div>
+                    </div>
+                    <div class="teacher-list" id="teachers-container">
+                        <!-- 教师列表将在这里动态生成 -->
+                    </div>
+                </div>
+                
+                <!-- 数据备份与恢复 -->
+                <div class="card backup-section">
+                    <h2>数据备份与恢复</h2>
+                    <div class="backup-options">
+                        <div class="backup-card">
+                            <h3>备份数据</h3>
+                            <p>将系统所有数据（教师信息、监考任务）导出为JSON文件，用于数据备份或迁移</p>
+                            <button class="btn-primary" onclick="backupData()">备份数据</button>
+                        </div>
+                        
+                        <div class="backup-card">
+                            <h3>恢复数据</h3>
+                            <p>从JSON备份文件恢复系统数据，将覆盖当前所有数据</p>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="restore-file" accept=".json" onchange="previewRestoreData()">
+                                <label for="restore-file" class="file-input-label">选择备份文件</label>
+                            </div>
+                            <div id="restore-preview" class="backup-preview" style="display: none;">
+                                <!-- 备份预览将在这里显示 -->
+                            </div>
+                            <button class="btn-warning" id="restore-btn" onclick="restoreData()" disabled>恢复数据</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 监考安排 -->
+            <div class="tab-content" id="exam-arrangement">
+                <div class="card">
+                    <div class="teacher-count-header">
+                        <h2>新建监考任务 - <span id="semester-indicator-arrangement"></span></h2>
+                        <div class="teacher-count-badge">可用教师: <span id="available-teachers-count">0</span>/<span id="total-teachers-count">0</span></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="exam-department">考试部门</label>
+                        <input type="text" id="exam-department" placeholder="请输入考试部门，如：计算机学院">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="exam-name">考试名称</label>
+                        <input type="text" id="exam-name" placeholder="请输入考试名称">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>任课教师（可选，可多选）</label>
+                        <!-- 已选教师显示区域 -->
+                        <div class="selected-teachers" id="selected-course-teachers">
+                            <!-- 已选教师标签将在这里动态生成 -->
+                        </div>
+                        <div class="alphabet-index" id="course-teachers-index"></div>
+                        <div class="search-box">
+                            <input type="text" id="course-teachers-search" placeholder="搜索教师..." oninput="filterTeachers('course-teachers', this.value)">
+                        </div>
+                        <div class="checkbox-group" id="course-teachers">
+                            <!-- 教师复选框将动态添加 -->
+                        </div>
+                    </div>
+                    
+                    <div class="flex-row">
+                        <div class="form-group">
+                            <label for="campus">校区</label>
+                            <select id="campus">
+                                <option value="本部">本部</option>
+                                <option value="旅顺">旅顺校区</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="exam-date">考试日期</label>
+                            <input type="date" id="exam-date">
+                            <div class="date-note">可以选择过去、现在或将来的日期</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="invigilator-count">监考人数（包括任课教师）</label>
+                        <input type="number" id="invigilator-count" min="1" value="2">
+                    </div>
+                    
+                    <button class="btn-primary" onclick="arrangeInvigilation()">自动排考</button>
+                </div>
+            </div>
+
+            <!-- 监考任务 -->
+            <div class="tab-content" id="exam-list">
+                <div class="card">
+                    <h2>监考任务列表 - <span id="semester-indicator-exams"></span></h2>
+                    <div class="form-group">
+                        <label for="exam-filter-date">按日期筛选</label>
+                        <input type="date" id="exam-filter-date" onchange="filterExamsByDate()">
+                        <button class="btn-secondary" onclick="clearExamFilter()">清除筛选</button>
+                    </div>
+                    
+                    <!-- 第二天考试提醒 -->
+                    <div id="tomorrow-exams-notice" class="tomorrow-exam-notice" style="display: none;">
+                        <h4>📢 明日考试提醒</h4>
+                        <p>以下考试将在明天进行，请相关监考教师做好准备：</p>
+                        <div id="tomorrow-exams-list"></div>
+                    </div>
+                    
+                    <div id="exams-container">
+                        <!-- 监考任务将在这里动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据查询 -->
+            <div class="tab-content" id="query">
+                <div class="card">
+                    <div class="teacher-count-header">
+                        <h2>数据查询 - <span id="semester-indicator-query"></span></h2>
+                        <div class="teacher-count-badge">教师库: <span id="query-teacher-count">0</span> 人</div>
+                    </div>
+                    
+                    <!-- 教师监考记录查询 -->
+                    <div class="query-section">
+                        <h3>教师监考记录查询</h3>
+                        <div class="form-group">
+                            <label>选择教师</label>
+                            <div class="alphabet-index" id="query-teachers-index"></div>
+                            <div class="search-box">
+                                <input type="text" id="query-teachers-search" placeholder="搜索教师..." oninput="filterQueryTeachers(this.value)">
+                            </div>
+                            <select id="query-teacher-select" onchange="queryTeacherRecords()">
+                                <option value="">-- 请选择教师 --</option>
+                                <!-- 教师选项将动态添加 -->
+                            </select>
+                        </div>
+                        
+                        <div id="teacher-query-results" class="query-results">
+                            <!-- 教师查询结果将在这里显示 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 课程监考安排查询 -->
+                    <div class="query-section">
+                        <h3>课程监考安排查询</h3>
+                        <div class="form-group">
+                            <label>搜索课程名称</label>
+                            <input type="text" id="query-exam-name" placeholder="输入课程名称或关键词" oninput="queryExamArrangements()">
+                        </div>
+                        
+                        <div id="exam-query-results" class="query-results">
+                            <!-- 课程查询结果将在这里显示 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 部门监考安排查询 -->
+                    <div class="query-section">
+                        <h3>部门监考安排查询</h3>
+                        <div class="form-group">
+                            <label>搜索部门名称</label>
+                            <input type="text" id="query-department" placeholder="输入部门名称或关键词" oninput="queryDepartmentExams()">
+                        </div>
+                        
+                        <div id="department-query-results" class="query-results">
+                            <!-- 部门查询结果将在这里显示 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据导出 -->
+            <div class="tab-content" id="export">
+                <div class="card">
+                    <div class="teacher-count-header">
+                        <h2>导出数据 - <span id="semester-indicator-export"></span></h2>
+                        <div class="teacher-count-badge">教师库: <span id="export-teacher-count">0</span> 人</div>
+                    </div>
+                    <div class="export-options">
+                        <div class="export-card">
+                            <h3>导出监考数据</h3>
+                            <p>导出所有监考任务的详细信息，包括监考教师、考试部门、考试名称、考试日期、校区以及教师的监考统计</p>
+                            <button class="btn-primary" onclick="exportExamData()">导出监考数据</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 替换监考教师模态框 -->
+    <div class="modal" id="replaceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>替换监考教师</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div>
+                <p>考试: <span id="modal-exam-name"></span></p>
+                <p>部门: <span id="modal-exam-department"></span></p>
+                <p>日期: <span id="modal-exam-date"></span></p>
+                <p>校区: <span id="modal-exam-campus"></span></p>
+                
+                <div id="past-exam-warning" class="past-exam-warning" style="display: none;">
+                    注意：这是一个已结束的考试，替换教师将更新历史监考记录。
+                </div>
+                
+                <div class="form-group">
+                    <label>选择要替换的教师</label>
+                    <div class="alphabet-index" id="replace-teachers-index"></div>
+                    <div class="checkbox-group" id="replace-teachers">
+                        <!-- 要替换的教师复选框将动态添加 -->
+                    </div>
+                </div>
+                
+                <div class="replacement-tabs">
+                    <div class="replacement-tab active" data-tab="recommended">推荐教师</div>
+                    <div class="replacement-tab" data-tab="manual">指定教师</div>
+                </div>
+                
+                <div class="replacement-content active" id="recommended-content">
+                    <div class="form-group">
+                        <label>推荐替代教师</label>
+                        <div id="replacement-options">
+                            <!-- 替代教师选项将动态添加 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="replacement-content" id="manual-content">
+                    <div class="form-group">
+                        <label>手动选择替代教师</label>
+                        <!-- 已选教师显示区域 -->
+                        <div class="selected-teachers" id="selected-manual-teachers">
+                            <!-- 已选教师标签将在这里动态生成 -->
+                        </div>
+                        <div class="alphabet-index" id="manual-teachers-index"></div>
+                        <div class="search-box">
+                            <input type="text" id="manual-teachers-search" placeholder="搜索教师..." oninput="filterTeachers('manual-teachers', this.value)">
+                        </div>
+                        <div class="checkbox-group" id="manual-teachers">
+                            <!-- 教师复选框将动态添加 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 替换原因部分 -->
+                <div class="replacement-reason">
+                    <div class="form-group">
+                        <label for="replacement-reason">替换原因</label>
+                        <textarea id="replacement-reason" rows="3" placeholder="请简要说明替换原因..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- 替换历史记录 -->
+                <div class="replacement-history" id="replacement-history" style="display: none;">
+                    <h4>替换历史记录</h4>
+                    <div id="replacement-history-list">
+                        <!-- 替换历史将在这里显示 -->
+                    </div>
+                </div>
+                
+                <div class="actions">
+                    <button class="btn-primary" onclick="confirmReplacement()">确认替换</button>
+                    <button class="btn-danger" onclick="closeModal()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看替换记录模态框 -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>监考替换记录</h3>
+                <span class="close" onclick="closeHistoryModal()">&times;</span>
+            </div>
+            <div>
+                <p>考试: <span id="history-exam-name"></span></p>
+                <p>部门: <span id="history-exam-department"></span></p>
+                <p>日期: <span id="history-exam-date"></span></p>
+                <p>校区: <span id="history-exam-campus"></span></p>
+                
+                <div id="history-container">
+                    <!-- 替换历史记录将在这里显示 -->
+                </div>
+                
+                <div class="actions">
+                    <button class="btn-primary" onclick="closeHistoryModal()">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 数据存储
+        let currentSemester = localStorage.getItem('currentSemester') || '25秋';
+        let teachers = [];
+        let exams = [];
+        let currentExamIndex = null;
+        let selectedReplacement = null;
+        let replacementMode = 'recommended'; // 'recommended' 或 'manual'
+        let restoreFileData = null; // 存储恢复文件数据
+        
+        // 学期数据映射
+        const semesterData = {
+            '25秋': { name: '2025年秋季学期', start: '2025-09-01', end: '2026-01-31' },
+            '26春': { name: '2026年春季学期', start: '2026-02-15', end: '2026-07-15' },
+            '26秋': { name: '2026年秋季学期', start: '2026-09-01', end: '2027-01-31' },
+            '27春': { name: '2027年春季学期', start: '2027-02-15', end: '2027-07-15' },
+            '27秋': { name: '2027年秋季学期', start: '2027-09-01', end: '2028-01-31' },
+            '28春': { name: '2028年春季学期', start: '2028-02-15', end: '2028-07-15' },
+            '28秋': { name: '2028年秋季学期', start: '2028-09-01', end: '2029-01-31' },
+            '29春': { name: '2029年春季学期', start: '2029-02-15', end: '2029-07-15' },
+            '29秋': { name: '2029年秋季学期', start: '2029-09-01', end: '2030-01-31' },
+            '30春': { name: '2030年春季学期', start: '2030-02-15', end: '2030-07-15' }
+        };
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            initTabs();
+            loadSemesterData();
+            initReplacementTabs();
+            updateSemesterDisplay();
+        });
+        
+        // 加载学期数据
+        function loadSemesterData() {
+            // 从localStorage加载当前学期的数据
+            const teachersData = localStorage.getItem(`teachers_${currentSemester}`);
+            const examsData = localStorage.getItem(`exams_${currentSemester}`);
+            
+            teachers = teachersData ? JSON.parse(teachersData) : [];
+            exams = examsData ? JSON.parse(examsData) : [];
+            
+            // 更新UI
+            renderTeachers();
+            renderTeacherOptions();
+            renderExams();
+            initQueryOptions();
+            updateTeacherCounts();
+            checkTomorrowExams();
+        }
+        
+        // 保存学期数据
+        function saveSemesterData() {
+            localStorage.setItem(`teachers_${currentSemester}`, JSON.stringify(teachers));
+            localStorage.setItem(`exams_${currentSemester}`, JSON.stringify(exams));
+            localStorage.setItem('currentSemester', currentSemester);
+        }
+        
+        // 选择学期
+        function selectSemester() {
+            const semesterSelect = document.getElementById('semester-select');
+            const selectedSemester = semesterSelect.value;
+            
+            if (selectedSemester === currentSemester) {
+                alert(`已经是${semesterData[selectedSemester].name}`);
+                return;
+            }
+            
+            // 保存当前学期数据
+            saveSemesterData();
+            
+            // 切换到新学期
+            currentSemester = selectedSemester;
+            loadSemesterData();
+            
+            // 更新UI显示
+            updateSemesterDisplay();
+            
+            // 切换到教师管理标签页
+            switchToTab('teachers');
+            
+            alert(`已切换到${semesterData[selectedSemester].name}`);
+        }
+        
+        // 更新学期显示
+        function updateSemesterDisplay() {
+            // 更新学期选择页面的当前学期信息
+            document.getElementById('current-semester-name').textContent = semesterData[currentSemester].name;
+            document.getElementById('current-semester-info').style.display = 'block';
+            
+            // 更新各页面的学期指示器
+            const semesterIndicators = document.querySelectorAll('[id^="semester-indicator"]');
+            semesterIndicators.forEach(indicator => {
+                indicator.textContent = semesterData[currentSemester].name;
+            });
+            
+            // 更新学期选择下拉框
+            document.getElementById('semester-select').value = currentSemester;
+        }
+        
+        // 切换到指定标签页
+        function switchToTab(tabName) {
+            // 移除所有active类
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            // 添加active类到当前标签
+            document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // 如果是查询标签，初始化查询选项
+            if (tabName === 'query') {
+                initQueryOptions();
+            }
+            
+            // 更新教师人数显示
+            updateTeacherCounts();
+            
+            // 如果是监考任务标签，检查明天考试
+            if (tabName === 'exam-list') {
+                checkTomorrowExams();
+            }
+        }
+        
+        // 检查明天的考试
+        function checkTomorrowExams() {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            
+            const tomorrowExams = exams.filter(exam => exam.date === tomorrowStr);
+            
+            const noticeContainer = document.getElementById('tomorrow-exams-notice');
+            const examsList = document.getElementById('tomorrow-exams-list');
+            
+            if (tomorrowExams.length > 0) {
+                noticeContainer.style.display = 'block';
+                examsList.innerHTML = '';
+                
+                tomorrowExams.forEach(exam => {
+                    const examItem = document.createElement('div');
+                    examItem.innerHTML = `
+                        <div style="margin: 5px 0; padding: 5px; background: white; border-radius: 3px;">
+                            <strong>${exam.department} - ${exam.name}</strong> (${exam.campus})
+                            <br>监考教师: ${exam.invigilators.join(', ')}
+                        </div>
+                    `;
+                    examsList.appendChild(examItem);
+                });
+            } else {
+                noticeContainer.style.display = 'none';
+            }
+        }
+        
+        // 更新教师人数统计
+        function updateTeacherCounts() {
+            const totalTeachers = teachers.length;
+            const teachersWithRecords = teachers.filter(teacher => teacher.totalCount > 0).length;
+            const teachersWithoutRecords = totalTeachers - teachersWithRecords;
+            
+            // 更新教师管理页面
+            document.getElementById('teacher-total-count').textContent = totalTeachers;
+            document.getElementById('teacher-with-records-count').textContent = teachersWithRecords;
+            document.getElementById('teacher-without-records-count').textContent = teachersWithoutRecords;
+            document.getElementById('teacher-list-count').textContent = totalTeachers;
+            
+            // 更新监考安排页面
+            document.getElementById('available-teachers-count').textContent = totalTeachers;
+            document.getElementById('total-teachers-count').textContent = totalTeachers;
+            
+            // 更新查询页面
+            document.getElementById('query-teacher-count').textContent = totalTeachers;
+            
+            // 更新导出页面
+            document.getElementById('export-teacher-count').textContent = totalTeachers;
+        }
+        
+        // 标签页切换
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有active类
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                    
+                    // 添加active类到当前标签
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                    
+                    // 如果是查询标签，初始化查询选项
+                    if (tab.dataset.tab === 'query') {
+                        initQueryOptions();
+                    }
+                    
+                    // 更新教师人数显示
+                    updateTeacherCounts();
+                    
+                    // 如果是监考任务标签，检查明天考试
+                    if (tab.dataset.tab === 'exam-list') {
+                        checkTomorrowExams();
+                    }
+                });
+            });
+        }
+        
+        // 初始化替换教师标签页
+        function initReplacementTabs() {
+            const tabs = document.querySelectorAll('.replacement-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有active类
+                    document.querySelectorAll('.replacement-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.replacement-content').forEach(t => t.classList.remove('active'));
+                    
+                    // 添加active类到当前标签
+                    tab.classList.add('active');
+                    document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+                    
+                    // 更新替换模式
+                    replacementMode = tab.dataset.tab;
+                    
+                    // 如果切换到手动模式，更新下拉选项
+                    if (replacementMode === 'manual') {
+                        updateManualTeacherOptions();
+                    }
+                });
+            });
+        }
+        
+        // 初始化查询选项
+        function initQueryOptions() {
+            const teacherSelect = document.getElementById('query-teacher-select');
+            teacherSelect.innerHTML = '<option value="">-- 请选择教师 --</option>';
+            
+            if (teachers.length === 0) {
+                teacherSelect.innerHTML = '<option value="">暂无教师数据</option>';
+                return;
+            }
+            
+            // 按首字母分组教师
+            const groups = groupTeachersByFirstLetter(teachers);
+            
+            // 创建字母索引
+            createAlphabetIndex('query-teachers-index', groups);
+            
+            // 添加教师选项
+            teachers.forEach(teacher => {
+                const option = document.createElement('option');
+                option.value = teacher.name;
+                option.textContent = teacher.name;
+                teacherSelect.appendChild(option);
+            });
+            
+            // 清空查询结果
+            document.getElementById('teacher-query-results').innerHTML = '';
+            document.getElementById('exam-query-results').innerHTML = '';
+            document.getElementById('department-query-results').innerHTML = '';
+        }
+        
+        // 过滤查询教师
+        function filterQueryTeachers(searchText) {
+            const select = document.getElementById('query-teacher-select');
+            const options = select.querySelectorAll('option');
+            
+            options.forEach(option => {
+                if (option.value === '') return;
+                
+                const isMatch = option.textContent.toLowerCase().includes(searchText.toLowerCase());
+                option.style.display = isMatch ? 'block' : 'none';
+            });
+        }
+        
+        // 查询教师监考记录
+        function queryTeacherRecords() {
+            const teacherName = document.getElementById('query-teacher-select').value;
+            const resultsContainer = document.getElementById('teacher-query-results');
+            
+            if (!teacherName) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+            
+            const teacher = teachers.find(t => t.name === teacherName);
+            if (!teacher) {
+                resultsContainer.innerHTML = '<div class="alert alert-danger">未找到该教师信息</div>';
+                return;
+            }
+            
+            // 查找该教师参与的所有监考任务
+            const teacherExams = exams.filter(exam => 
+                exam.invigilators.includes(teacher.name)
+            );
+            
+            // 按日期排序
+            teacherExams.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            let html = `
+                <div class="teacher-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">总监考次数</div>
+                        <div class="stat-value">${teacher.totalCount || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">旅顺校区监考次数</div>
+                        <div class="stat-value">${teacher.lvshunCount || 0}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">本部校区监考次数</div>
+                        <div class="stat-value">${(teacher.totalCount || 0) - (teacher.lvshunCount || 0)}</div>
+                    </div>
+                </div>
+            `;
+            
+            if (teacherExams.length === 0) {
+                html += '<div class="alert alert-info">该教师暂无监考记录</div>';
+            } else {
+                html += '<h4>监考记录详情：</h4>';
+                
+                teacherExams.forEach((exam, index) => {
+                    const isCourseTeacher = exam.courseTeachers && exam.courseTeachers.includes(teacher.name);
+                    const examDate = new Date(exam.date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const isPastExam = examDate < today;
+                    const isTomorrowExam = isTomorrow(exam.date);
+                    
+                    html += `
+                        <div class="exam-record">
+                            <h4>${exam.department ? exam.department + ' - ' : ''}${exam.name} 
+                                ${isPastExam ? '<span class="badge badge-secondary">已结束</span>' : ''}
+                                ${isTomorrowExam ? '<span class="badge badge-tomorrow">明天考试</span>' : ''}
+                            </h4>
+                            <p><strong>日期：</strong>${exam.date}</p>
+                            <p><strong>校区：</strong>${exam.campus}</p>
+                            <p><strong>角色：</strong>${isCourseTeacher ? '任课教师' : '监考教师'}</p>
+                            <p><strong>其他监考教师：</strong>${exam.invigilators.filter(name => name !== teacher.name).join(', ') || '无'}</p>
+                        </div>
+                    `;
+                });
+            }
+            
+            resultsContainer.innerHTML = html;
+        }
+        
+        // 检查是否为明天考试
+        function isTomorrow(dateStr) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            return dateStr === tomorrowStr;
+        }
+        
+        // 查询课程监考安排
+        function queryExamArrangements() {
+            const searchText = document.getElementById('query-exam-name').value.trim();
+            const resultsContainer = document.getElementById('exam-query-results');
+            
+            if (!searchText) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+            
+            // 搜索匹配的考试
+            const matchedExams = exams.filter(exam => 
+                exam.name.toLowerCase().includes(searchText.toLowerCase())
+            );
+            
+            if (matchedExams.length === 0) {
+                resultsContainer.innerHTML = '<div class="alert alert-info">未找到匹配的课程</div>';
+                return;
+            }
+            
+            // 按日期排序
+            matchedExams.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            let html = `<h4>找到 ${matchedExams.length} 个匹配的课程：</h4>`;
+            
+            matchedExams.forEach(exam => {
+                const examDate = new Date(exam.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const isPastExam = examDate < today;
+                const isTomorrowExam = isTomorrow(exam.date);
+                
+                html += `
+                    <div class="exam-record">
+                        <h4>${exam.department ? exam.department + ' - ' : ''}${exam.name} 
+                            ${isPastExam ? '<span class="badge badge-secondary">已结束</span>' : ''}
+                            ${isTomorrowExam ? '<span class="badge badge-tomorrow">明天考试</span>' : ''}
+                        </h4>
+                        <p><strong>日期：</strong>${exam.date}</p>
+                        <p><strong>校区：</strong>${exam.campus}</p>
+                        <p><strong>任课教师：</strong>${exam.courseTeachers && exam.courseTeachers.length > 0 ? exam.courseTeachers.join(', ') : '无'}</p>
+                        <p><strong>监考教师：</strong>${exam.invigilators.join(', ')}</p>
+                        ${exam.replacementHistory && exam.replacementHistory.length > 0 ? 
+                          `<p><strong>替换记录：</strong>${exam.replacementHistory.length} 次 <button class="btn-info" onclick="showReplacementHistory(${exams.indexOf(exam)})">查看详情</button></p>` : ''}
+                    </div>
+                `;
+            });
+            
+            resultsContainer.innerHTML = html;
+        }
+        
+        // 查询部门监考安排
+        function queryDepartmentExams() {
+            const department = document.getElementById('query-department').value.trim();
+            const resultsContainer = document.getElementById('department-query-results');
+            
+            if (!department) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+            
+            // 搜索匹配的考试
+            const matchedExams = exams.filter(exam => 
+                exam.department && exam.department.toLowerCase().includes(department.toLowerCase())
+            );
+            
+            if (matchedExams.length === 0) {
+                resultsContainer.innerHTML = '<div class="alert alert-info">未找到匹配的部门监考任务</div>';
+                return;
+            }
+            
+            // 按日期排序
+            matchedExams.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            let html = `<h4>找到 ${matchedExams.length} 个匹配的部门监考任务：</h4>`;
+            
+            matchedExams.forEach(exam => {
+                const examDate = new Date(exam.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const isPastExam = examDate < today;
+                const isTomorrowExam = isTomorrow(exam.date);
+                
+                html += `
+                    <div class="exam-record">
+                        <h4>${exam.department ? exam.department + ' - ' : ''}${exam.name} 
+                            ${isPastExam ? '<span class="badge badge-secondary">已结束</span>' : ''}
+                            ${isTomorrowExam ? '<span class="badge badge-tomorrow">明天考试</span>' : ''}
+                        </h4>
+                        <p><strong>日期：</strong>${exam.date}</p>
+                        <p><strong>校区：</strong>${exam.campus}</p>
+                        <p><strong>任课教师：</strong>${exam.courseTeachers && exam.courseTeachers.length > 0 ? exam.courseTeachers.join(', ') : '无'}</p>
+                        <p><strong>监考教师：</strong>${exam.invigilators.join(', ')}</p>
+                        ${exam.replacementHistory && exam.replacementHistory.length > 0 ? 
+                          `<p><strong>替换记录：</strong>${exam.replacementHistory.length} 次 <button class="btn-info" onclick="showReplacementHistory(${exams.indexOf(exam)})">查看详情</button></p>` : ''}
+                    </div>
+                `;
+            });
+            
+            resultsContainer.innerHTML = html;
+        }
+        
+        // 渲染教师列表
+        function renderTeachers() {
+            const container = document.getElementById('teachers-container');
+            container.innerHTML = '';
+            
+            if (teachers.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">暂无教师数据</div>';
+                updateTeacherCounts();
+                return;
+            }
+            
+            teachers.forEach((teacher, index) => {
+                const item = document.createElement('div');
+                item.className = 'teacher-item';
+                item.innerHTML = `
+                    <div>
+                        <strong>${teacher.name}</strong>
+                        <span class="badge badge-primary">总次数: ${teacher.totalCount || 0}</span>
+                        <span class="badge badge-warning">旅顺次数: ${teacher.lvshunCount || 0}</span>
+                        ${teacher.totalCount === 0 ? '<span class="badge badge-secondary">无记录</span>' : ''}
+                    </div>
+                    <button class="btn-danger" onclick="removeTeacher(${index})">删除</button>
+                `;
+                container.appendChild(item);
+            });
+            
+            updateTeacherCounts();
+        }
+        
+        // 获取教师姓名的首字母（支持中文拼音首字母）
+        function getFirstLetter(name) {
+            if (!name) return '#';
+            
+            // 如果是英文名，取第一个字母
+            if (/^[a-zA-Z]/.test(name)) {
+                return name.charAt(0).toUpperCase();
+            }
+            
+            // 如果是中文名，转换为拼音首字母
+            const firstChar = name.charAt(0);
+            const unicode = firstChar.charCodeAt(0);
+            
+            // 中文Unicode范围
+            if (unicode >= 19968 && unicode <= 40869) {
+                // 简单的中文拼音首字母映射（实际应用中可以使用更完整的拼音库）
+                const pinyinMap = {
+                    '阿': 'A', '八': 'B', '擦': 'C', '搭': 'D', '鹅': 'E',
+                    '发': 'F', '嘎': 'G', '哈': 'H', '击': 'J', '喀': 'K',
+                    '拉': 'L', '妈': 'M', '拿': 'N', '哦': 'O', '啪': 'P',
+                    '七': 'Q', '然': 'R', '撒': 'S', '他': 'T', '挖': 'W',
+                    '西': 'X', '压': 'Y', '杂': 'Z'
+                };
+                
+                // 简化的拼音首字母获取
+                for (const [char, letter] of Object.entries(pinyinMap)) {
+                    if (firstChar.localeCompare(char) >= 0) {
+                        return letter;
+                    }
+                }
+                return 'Z';
+            }
+            
+            return '#';
+        }
+        
+        // 按首字母分组教师
+        function groupTeachersByFirstLetter(teacherList) {
+            const groups = {};
+            
+            teacherList.forEach(teacher => {
+                const letter = getFirstLetter(teacher.name);
+                if (!groups[letter]) {
+                    groups[letter] = [];
+                }
+                groups[letter].push(teacher);
+            });
+            
+            // 按字母顺序排序
+            const sortedGroups = {};
+            Object.keys(groups).sort().forEach(key => {
+                sortedGroups[key] = groups[key];
+            });
+            
+            return sortedGroups;
+        }
+        
+        // 创建字母索引
+        function createAlphabetIndex(containerId, groups) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            const letters = Object.keys(groups).sort();
+            
+            letters.forEach(letter => {
+                const letterElement = document.createElement('div');
+                letterElement.className = 'alphabet-letter';
+                letterElement.textContent = letter;
+                letterElement.onclick = () => {
+                    scrollToLetter(containerId.replace('-index', ''), letter);
+                };
+                container.appendChild(letterElement);
+            });
+        }
+        
+        // 滚动到指定字母的教师组
+        function scrollToLetter(containerId, letter) {
+            const container = document.getElementById(containerId);
+            const groupElement = container.querySelector(`[data-letter="${letter}"]`);
+            
+            if (groupElement) {
+                groupElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // 高亮显示当前字母
+                document.querySelectorAll(`#${containerId}-index .alphabet-letter`).forEach(el => {
+                    el.classList.remove('active');
+                });
+                const targetLetter = document.querySelector(`#${containerId}-index .alphabet-letter:contains("${letter}")`);
+                if (targetLetter) {
+                    targetLetter.classList.add('active');
+                }
+            }
+        }
+        
+        // 过滤教师
+        function filterTeachers(containerId, searchText) {
+            const container = document.getElementById(containerId);
+            const groups = container.querySelectorAll('.teacher-group');
+            
+            groups.forEach(group => {
+                const letter = group.getAttribute('data-letter');
+                const items = group.querySelectorAll('.checkbox-item');
+                let hasVisibleItems = false;
+                
+                items.forEach(item => {
+                    const teacherName = item.querySelector('label').textContent;
+                    const isMatch = teacherName.toLowerCase().includes(searchText.toLowerCase());
+                    item.style.display = isMatch ? 'flex' : 'none';
+                    if (isMatch) hasVisibleItems = true;
+                });
+                
+                group.style.display = hasVisibleItems ? 'block' : 'none';
+            });
+        }
+        
+        // 渲染教师选项（用于多选和不可用选择）
+        function renderTeacherOptions() {
+            renderTeacherCheckboxGroup('course-teachers');
+            updateTeacherCounts();
+        }
+        
+        // 渲染教师复选框组
+        function renderTeacherCheckboxGroup(containerId) {
+            const container = document.getElementById(containerId);
+            const indexContainer = document.getElementById(`${containerId}-index`);
+            
+            // 清空现有选项
+            container.innerHTML = '';
+            
+            if (teachers.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">暂无教师数据，请先添加教师</div>';
+                if (indexContainer) indexContainer.innerHTML = '';
+                return;
+            }
+            
+            // 按首字母分组
+            const groups = groupTeachersByFirstLetter(teachers);
+            
+            // 创建字母索引
+            if (indexContainer) {
+                createAlphabetIndex(`${containerId}-index`, groups);
+            }
+            
+            // 添加教师复选框（按字母分组）
+            Object.entries(groups).forEach(([letter, teachersInGroup]) => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'teacher-group';
+                groupDiv.setAttribute('data-letter', letter);
+                
+                const header = document.createElement('div');
+                header.className = 'group-header';
+                header.textContent = letter;
+                groupDiv.appendChild(header);
+                
+                teachersInGroup.forEach(teacher => {
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'checkbox-item';
+                    checkbox.innerHTML = `
+                        <input type="checkbox" id="${containerId}-${teacher.name}" value="${teacher.name}" 
+                               onchange="updateSelectedTeachers('${containerId}', this)">
+                        <label for="${containerId}-${teacher.name}">${teacher.name}</label>
+                    `;
+                    groupDiv.appendChild(checkbox);
+                });
+                
+                container.appendChild(groupDiv);
+            });
+            
+            // 初始化已选教师显示
+            updateSelectedTeachers(containerId);
+        }
+        
+        // 更新已选教师显示
+        function updateSelectedTeachers(containerId, changedCheckbox = null) {
+            // 获取对应的已选教师显示区域
+            const selectedContainer = document.getElementById(`selected-${containerId}`);
+            if (!selectedContainer) return;
+            
+            // 获取所有选中的复选框
+            const checkboxes = document.querySelectorAll(`#${containerId} input:checked`);
+            const selectedTeachers = Array.from(checkboxes).map(cb => cb.value);
+            
+            // 更新已选教师显示
+            selectedContainer.innerHTML = '';
+            
+            if (selectedTeachers.length === 0) {
+                selectedContainer.innerHTML = '<div style="color: #999; font-style: italic;">暂无已选教师</div>';
+            } else {
+                selectedTeachers.forEach(teacherName => {
+                    const tag = document.createElement('div');
+                    tag.className = 'selected-teacher-tag';
+                    tag.innerHTML = `
+                        ${teacherName}
+                        <span class="remove" onclick="deselectTeacher('${containerId}', '${teacherName}')">×</span>
+                    `;
+                    selectedContainer.appendChild(tag);
+                });
+            }
+            
+            // 如果是任课教师选择，更新selectedReplacement
+            if (containerId === 'manual-teachers' && changedCheckbox) {
+                if (changedCheckbox.checked) {
+                    const teacher = teachers.find(t => t.name === changedCheckbox.value);
+                    if (teacher) {
+                        selectedReplacement = teacher;
+                    }
+                } else {
+                    selectedReplacement = null;
+                }
+            }
+        }
+        
+        // 取消选择教师
+        function deselectTeacher(containerId, teacherName) {
+            const checkbox = document.getElementById(`${containerId}-${teacherName}`);
+            if (checkbox) {
+                checkbox.checked = false;
+                updateSelectedTeachers(containerId);
+            }
+        }
+        
+        // 添加教师
+        function addTeachers() {
+            const namesText = document.getElementById('teacher-names').value;
+            if (!namesText.trim()) {
+                alert('请输入教师姓名');
+                return;
+            }
+            
+            const names = namesText.split('\n')
+                .map(name => name.trim())
+                .filter(name => name.length > 0);
+            
+            names.forEach(name => {
+                // 检查是否已存在
+                const exists = teachers.some(teacher => teacher.name === name);
+                if (!exists) {
+                    teachers.push({
+                        name: name,
+                        totalCount: 0,
+                        lvshunCount: 0,
+                        lastCampus: null
+                    });
+                }
+            });
+            
+            // 保存并更新UI
+            saveSemesterData();
+            renderTeachers();
+            renderTeacherOptions();
+            document.getElementById('teacher-names').value = '';
+            
+            alert(`成功添加 ${names.length} 名教师`);
+        }
+        
+        // 删除教师
+        function removeTeacher(index) {
+            if (confirm(`确定要删除教师 "${teachers[index].name}" 吗？`)) {
+                teachers.splice(index, 1);
+                saveSemesterData();
+                renderTeachers();
+                renderTeacherOptions();
+            }
+        }
+        
+        // 清空教师库
+        function clearTeachers() {
+            if (confirm('确定要清空所有教师数据吗？此操作不可恢复！')) {
+                teachers = [];
+                saveSemesterData();
+                renderTeachers();
+                renderTeacherOptions();
+            }
+        }
+        
+        // 按日期筛选监考任务
+        function filterExamsByDate() {
+            const filterDate = document.getElementById('exam-filter-date').value;
+            renderExams(filterDate);
+        }
+        
+        // 清除监考任务筛选
+        function clearExamFilter() {
+            document.getElementById('exam-filter-date').value = '';
+            renderExams();
+        }
+        
+        // 渲染考试列表
+        function renderExams(filterDate = null) {
+            const container = document.getElementById('exams-container');
+            container.innerHTML = '';
+            
+            let filteredExams = exams;
+            
+            // 如果有筛选日期，过滤考试
+            if (filterDate) {
+                filteredExams = exams.filter(exam => exam.date === filterDate);
+            }
+            
+            if (filteredExams.length === 0) {
+                if (filterDate) {
+                    container.innerHTML = `<div class="alert alert-info">${filterDate} 没有监考任务</div>`;
+                } else {
+                    container.innerHTML = '<div class="alert alert-info">暂无监考任务</div>';
+                }
+                return;
+            }
+            
+            // 按日期排序（最近的在前）
+            filteredExams.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            filteredExams.forEach((exam, index) => {
+                const originalIndex = exams.findIndex(e => e.timestamp === exam.timestamp);
+                const examCard = document.createElement('div');
+                examCard.className = 'card';
+                
+                // 判断考试日期是否为过去
+                const examDate = new Date(exam.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const isPastExam = examDate < today;
+                const isTomorrowExam = isTomorrow(exam.date);
+                
+                examCard.innerHTML = `
+                    <h3>${exam.department ? exam.department + ' - ' : ''}${exam.name} - ${exam.date} - ${exam.campus} 
+                        ${isPastExam ? '<span class="badge badge-secondary">已结束</span>' : ''}
+                        ${isTomorrowExam ? '<span class="badge badge-tomorrow">明天考试</span>' : ''}
+                    </h3>
+                    <p><strong>任课教师:</strong> ${exam.courseTeachers && exam.courseTeachers.length > 0 ? exam.courseTeachers.join(', ') : '无'}</p>
+                    <p><strong>监考教师:</strong> ${exam.invigilators.join(', ')}</p>
+                    <div class="actions">
+                        <button class="btn-danger" onclick="removeExam(${originalIndex})">删除任务</button>
+                        <button class="btn-warning" onclick="openReplaceModal(${originalIndex})">替换教师</button>
+                        ${exam.replacementHistory && exam.replacementHistory.length > 0 ? 
+                          `<button class="btn-info" onclick="showReplacementHistory(${originalIndex})">查看替换记录</button>` : ''}
+                    </div>
+                `;
+                container.appendChild(examCard);
+            });
+        }
+        
+        // 自动排考
+        function arrangeInvigilation() {
+            // 获取表单数据
+            const examDepartment = document.getElementById('exam-department').value.trim();
+            const examName = document.getElementById('exam-name').value;
+            const campus = document.getElementById('campus').value;
+            const examDate = document.getElementById('exam-date').value;
+            const invigilatorCount = parseInt(document.getElementById('invigilator-count').value);
+            
+            // 获取选中的任课教师
+            const courseCheckboxes = document.querySelectorAll('#course-teachers input:checked');
+            const courseTeachers = Array.from(courseCheckboxes).map(cb => cb.value);
+            
+            // 验证表单
+            if (!examDepartment) {
+                alert('请填写考试部门');
+                return;
+            }
+            
+            if (!examName || !examDate || !invigilatorCount) {
+                alert('请填写必填字段：考试名称、日期和监考人数');
+                return;
+            }
+            
+            // 筛选可用教师 - 修改部分：允许任课教师一天多场
+            let availableTeachers = teachers.filter(teacher => {
+                // 如果是任课教师，允许一天多场，不检查当天监考任务
+                if (courseTeachers.includes(teacher.name)) {
+                    return true;
+                }
+                
+                // 对于非任课教师，检查当天是否已有监考任务
+                const hasExamOnDate = exams.some(exam => {
+                    return exam.date === examDate && exam.invigilators.includes(teacher.name);
+                });
+                
+                return !hasExamOnDate;
+            });
+            
+            // 如果指定了任课教师，确保其在教师库中
+            const unavailableCourseTeachers = [];
+            courseTeachers.forEach(teacher => {
+                const courseTeacherObj = teachers.find(t => t.name === teacher);
+                if (!courseTeacherObj) {
+                    unavailableCourseTeachers.push(teacher);
+                }
+            });
+            
+            if (unavailableCourseTeachers.length > 0) {
+                alert(`以下任课教师不在教师库中: ${unavailableCourseTeachers.join(', ')}，请重新选择`);
+                return;
+            }
+            
+            // 如果可用教师不足
+            if (availableTeachers.length < invigilatorCount) {
+                alert(`可用教师不足，需要 ${invigilatorCount} 人，但只有 ${availableTeachers.length} 人可用`);
+                return;
+            }
+            
+            // 智能选择监考教师
+            const selectedTeachers = selectInvigilators(
+                availableTeachers, 
+                invigilatorCount, 
+                campus, 
+                courseTeachers
+            );
+            
+            // 创建监考任务
+            const exam = {
+                department: examDepartment,
+                name: examName,
+                courseTeachers: courseTeachers.length > 0 ? courseTeachers : null,
+                campus,
+                date: examDate,
+                invigilators: selectedTeachers,
+                timestamp: new Date().toISOString(),
+                replacementHistory: [] // 初始化替换历史记录
+            };
+            
+            // 更新教师数据
+            updateTeacherStats(selectedTeachers, campus);
+            
+            // 保存考试
+            exams.push(exam);
+            saveSemesterData();
+            
+            // 更新UI
+            renderExams();
+            renderTeachers();
+            checkTomorrowExams(); // 更新明天考试提醒
+            
+            // 显示成功消息
+            alert('监考安排成功！');
+            
+            // 重置表单
+            document.getElementById('exam-department').value = '';
+            document.getElementById('exam-name').value = '';
+            document.querySelectorAll('#course-teachers input').forEach(cb => cb.checked = false);
+            updateSelectedTeachers('course-teachers');
+            document.getElementById('invigilator-count').value = '2';
+        }
+        
+        // 智能选择监考教师算法
+        function selectInvigilators(availableTeachers, count, campus, courseTeachers) {
+            // 复制数组以免修改原数组
+            let candidates = [...availableTeachers];
+            
+            // 如果有任课教师，优先选择
+            const selected = [];
+            courseTeachers.forEach(courseTeacher => {
+                const ctIndex = candidates.findIndex(t => t.name === courseTeacher);
+                if (ctIndex > -1) {
+                    selected.push(candidates[ctIndex].name);
+                    candidates.splice(ctIndex, 1);
+                    count--;
+                }
+            });
+            
+            // 按监考次数和校区次数排序，优先选择次数少的
+            candidates.sort((a, b) => {
+                // 总次数优先
+                if (a.totalCount !== b.totalCount) {
+                    return a.totalCount - b.totalCount;
+                }
+                
+                // 旅顺次数次优先（如果是旅顺校区）
+                if (campus === '旅顺' && a.lvshunCount !== b.lvshunCount) {
+                    return a.lvshunCount - b.lvshunCount;
+                }
+                
+                // 避免连续安排旅顺校区
+                if (a.lastCampus === '旅顺' && b.lastCampus !== '旅顺') {
+                    return 1;
+                }
+                if (a.lastCampus !== '旅顺' && b.lastCampus === '旅顺') {
+                    return -1;
+                }
+                
+                // 随机排序作为最后手段
+                return Math.random() - 0.5;
+            });
+            
+            // 选择前count个教师
+            for (let i = 0; i < count && i < candidates.length; i++) {
+                selected.push(candidates[i].name);
+            }
+            
+            return selected;
+        }
+        
+        // 更新教师统计数据
+        function updateTeacherStats(teacherNames, campus) {
+            teacherNames.forEach(name => {
+                const teacher = teachers.find(t => t.name === name);
+                if (teacher) {
+                    teacher.totalCount = (teacher.totalCount || 0) + 1;
+                    if (campus === '旅顺') {
+                        teacher.lvshunCount = (teacher.lvshunCount || 0) + 1;
+                    }
+                    teacher.lastCampus = campus;
+                }
+            });
+            updateTeacherCounts();
+        }
+        
+        // 删除监考任务
+        function removeExam(index) {
+            if (confirm('确定要删除这个监考任务吗？')) {
+                // 更新教师统计数据（减去这次监考）
+                const exam = exams[index];
+                exam.invigilators.forEach(name => {
+                    const teacher = teachers.find(t => t.name === name);
+                    if (teacher) {
+                        teacher.totalCount = Math.max(0, (teacher.totalCount || 0) - 1);
+                        if (exam.campus === '旅顺') {
+                            teacher.lvshunCount = Math.max(0, (teacher.lvshunCount || 0) - 1);
+                        }
+                    }
+                });
+                
+                exams.splice(index, 1);
+                saveSemesterData();
+                renderExams();
+                renderTeachers();
+                checkTomorrowExams(); // 更新明天考试提醒
+            }
+        }
+        
+        // 打开替换教师模态框
+        function openReplaceModal(index) {
+            currentExamIndex = index;
+            const exam = exams[index];
+            
+            // 填充模态框基本信息
+            document.getElementById('modal-exam-name').textContent = exam.name;
+            document.getElementById('modal-exam-department').textContent = exam.department || '未设置';
+            document.getElementById('modal-exam-date').textContent = exam.date;
+            document.getElementById('modal-exam-campus').textContent = exam.campus;
+            
+            // 检查考试日期是否为过去
+            const examDate = new Date(exam.date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const isPastExam = examDate < today;
+            
+            // 显示或隐藏过去考试警告
+            const warningElement = document.getElementById('past-exam-warning');
+            if (isPastExam) {
+                warningElement.style.display = 'block';
+            } else {
+                warningElement.style.display = 'none';
+            }
+            
+            // 清空并填充要替换的教师列表
+            const replaceContainer = document.getElementById('replace-teachers');
+            replaceContainer.innerHTML = '';
+            
+            // 按首字母分组要替换的教师
+            const replaceTeachers = exam.invigilators.map(name => {
+                return teachers.find(t => t.name === name);
+            }).filter(Boolean);
+            
+            const groups = groupTeachersByFirstLetter(replaceTeachers);
+            
+            // 创建字母索引
+            createAlphabetIndex('replace-teachers-index', groups);
+            
+            // 添加教师复选框（按字母分组）
+            Object.entries(groups).forEach(([letter, teachersInGroup]) => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'teacher-group';
+                groupDiv.setAttribute('data-letter', letter);
+                
+                const header = document.createElement('div');
+                header.className = 'group-header';
+                header.textContent = letter;
+                groupDiv.appendChild(header);
+                
+                teachersInGroup.forEach(teacher => {
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'checkbox-item';
+                    checkbox.innerHTML = `
+                        <input type="checkbox" id="replace-${teacher.name}" value="${teacher.name}" onchange="updateReplacementOptions()">
+                        <label for="replace-${teacher.name}">${teacher.name}</label>
+                    `;
+                    groupDiv.appendChild(checkbox);
+                });
+                
+                replaceContainer.appendChild(groupDiv);
+            });
+            
+            // 清空替代教师选项
+            document.getElementById('replacement-options').innerHTML = '';
+            selectedReplacement = null;
+            
+            // 重置替换原因输入框
+            document.getElementById('replacement-reason').value = '';
+            
+            // 重置为推荐模式
+            document.querySelectorAll('.replacement-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.replacement-content').forEach(content => content.classList.remove('active'));
+            document.querySelector('.replacement-tab[data-tab="recommended"]').classList.add('active');
+            document.getElementById('recommended-content').classList.add('active');
+            replacementMode = 'recommended';
+            
+            // 初始化手动选择教师选项
+            renderManualTeacherOptions();
+            
+            // 显示替换历史记录（如果有）
+            const historyContainer = document.getElementById('replacement-history');
+            const historyList = document.getElementById('replacement-history-list');
+            
+            if (exam.replacementHistory && exam.replacementHistory.length > 0) {
+                historyContainer.style.display = 'block';
+                historyList.innerHTML = '';
+                
+                exam.replacementHistory.forEach((record, idx) => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    historyItem.innerHTML = `
+                        <h4>替换记录 ${idx + 1}</h4>
+                        <p><strong>时间：</strong>${new Date(record.timestamp).toLocaleString()}</p>
+                        <p><strong>原教师：</strong>${record.originalTeacher}</p>
+                        <p><strong>新教师：</strong>${record.newTeacher}</p>
+                        <p><strong>原因：</strong>${record.reason}</p>
+                    `;
+                    historyList.appendChild(historyItem);
+                });
+            } else {
+                historyContainer.style.display = 'none';
+            }
+            
+            // 显示模态框
+            document.getElementById('replaceModal').style.display = 'flex';
+        }
+        
+        // 渲染手动选择教师选项
+        function renderManualTeacherOptions() {
+            const container = document.getElementById('manual-teachers');
+            const indexContainer = document.getElementById('manual-teachers-index');
+            
+            // 清空现有选项
+            container.innerHTML = '';
+            
+            if (teachers.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">暂无教师数据</div>';
+                if (indexContainer) indexContainer.innerHTML = '';
+                return;
+            }
+            
+            // 按首字母分组
+            const groups = groupTeachersByFirstLetter(teachers);
+            
+            // 创建字母索引
+            if (indexContainer) {
+                createAlphabetIndex('manual-teachers-index', groups);
+            }
+            
+            // 添加教师复选框（按字母分组）
+            Object.entries(groups).forEach(([letter, teachersInGroup]) => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'teacher-group';
+                groupDiv.setAttribute('data-letter', letter);
+                
+                const header = document.createElement('div');
+                header.className = 'group-header';
+                header.textContent = letter;
+                groupDiv.appendChild(header);
+                
+                teachersInGroup.forEach(teacher => {
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'checkbox-item';
+                    checkbox.innerHTML = `
+                        <input type="checkbox" id="manual-teachers-${teacher.name}" value="${teacher.name}" 
+                               onchange="updateSelectedTeachers('manual-teachers', this)">
+                        <label for="manual-teachers-${teacher.name}">${teacher.name}</label>
+                    `;
+                    groupDiv.appendChild(checkbox);
+                });
+                
+                container.appendChild(groupDiv);
+            });
+            
+            // 初始化已选教师显示
+            updateSelectedTeachers('manual-teachers');
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('replaceModal').style.display = 'none';
+        }
+        
+        // 选择要替换的教师后更新替代教师选项
+        function updateReplacementOptions() {
+            const selectedCheckboxes = document.querySelectorAll('#replace-teachers input:checked');
+            const teachersToReplace = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            if (teachersToReplace.length === 0) {
+                document.getElementById('replacement-options').innerHTML = '';
+                selectedReplacement = null;
+                return;
+            }
+            
+            // 获取考试信息
+            const exam = exams[currentExamIndex];
+            
+            // 筛选可用教师 - 修改部分：允许任课教师一天多场
+            let availableTeachers = teachers.filter(teacher => {
+                // 排除要替换的教师
+                if (teachersToReplace.includes(teacher.name)) return false;
+                
+                // 排除已经是监考的教师
+                if (exam.invigilators.includes(teacher.name)) return false;
+                
+                // 对于已结束的考试，不检查当天是否有其他监考任务
+                const examDate = new Date(exam.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const isPastExam = examDate < today;
+                
+                if (!isPastExam) {
+                    // 对于未来考试，如果是当前考试的任课教师，允许一天多场
+                    if (exam.courseTeachers && exam.courseTeachers.includes(teacher.name)) {
+                        // 允许
+                    } else {
+                        // 对于非任课教师，检查当天是否已有其他监考任务
+                        const hasOtherExamOnDate = exams.some(e => {
+                            return e.date === exam.date && e !== exam && e.invigilators.includes(teacher.name);
+                        });
+                        
+                        if (hasOtherExamOnDate) return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // 按监考次数和校区次数排序，优先选择次数少的
+            availableTeachers.sort((a, b) => {
+                // 总次数优先
+                if (a.totalCount !== b.totalCount) {
+                    return a.totalCount - b.totalCount;
+                }
+                
+                // 旅顺次数次优先
+                if (exam.campus === '旅顺' && a.lvshunCount !== b.lvshunCount) {
+                    return a.lvshunCount - b.lvshunCount;
+                }
+                
+                // 避免连续安排旅顺校区
+                if (a.lastCampus === '旅顺' && b.lastCampus !== '旅顺') {
+                    return 1;
+                }
+                if (a.lastCampus !== '旅顺' && b.lastCampus === '旅顺') {
+                    return -1;
+                }
+                
+                return Math.random() - 0.5;
+            });
+            
+            // 显示替代教师选项
+            const optionsContainer = document.getElementById('replacement-options');
+            optionsContainer.innerHTML = '';
+            
+            // 只显示前5个最佳选项
+            const topOptions = availableTeachers.slice(0, Math.min(5, availableTeachers.length));
+            
+            if (topOptions.length === 0) {
+                optionsContainer.innerHTML = '<div class="alert alert-danger">没有可用的替代教师</div>';
+                return;
+            }
+            
+            topOptions.forEach(teacher => {
+                const option = document.createElement('div');
+                option.className = 'option-item';
+                option.innerHTML = `
+                    <strong>${teacher.name}</strong>
+                    <div class="teacher-info">
+                        <div>总监考次数: ${teacher.totalCount || 0}</div>
+                        <div>旅顺监考次数: ${teacher.lvshunCount || 0}</div>
+                        <div>上次监考校区: ${teacher.lastCampus || '无记录'}</div>
+                    </div>
+                `;
+                option.addEventListener('click', () => {
+                    // 移除之前的选择
+                    document.querySelectorAll('.option-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                    
+                    // 添加当前选择
+                    option.classList.add('selected');
+                    selectedReplacement = teacher;
+                });
+                optionsContainer.appendChild(option);
+            });
+        }
+        
+        // 确认替换教师
+        function confirmReplacement() {
+            const selectedCheckboxes = document.querySelectorAll('#replace-teachers input:checked');
+            const teachersToReplace = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            if (teachersToReplace.length === 0) {
+                alert('请选择要替换的教师');
+                return;
+            }
+            
+            if (!selectedReplacement) {
+                alert('请选择替代教师');
+                return;
+            }
+            
+            const reason = document.getElementById('replacement-reason').value.trim();
+            if (!reason) {
+                alert('请填写替换原因');
+                return;
+            }
+            
+            if (teachersToReplace.length > 1) {
+                alert('目前只支持一次替换一位教师，请只选择一位要替换的教师');
+                return;
+            }
+            
+            const exam = exams[currentExamIndex];
+            const teacherToReplace = teachersToReplace[0];
+            
+            // 检查是否选择自己替换自己
+            if (teacherToReplace === selectedReplacement.name) {
+                alert('不能使用同一教师替换自己');
+                return;
+            }
+            
+            // 更新教师统计数据
+            const oldTeacher = teachers.find(t => t.name === teacherToReplace);
+            if (oldTeacher) {
+                oldTeacher.totalCount = Math.max(0, (oldTeacher.totalCount || 0) - 1);
+                if (exam.campus === '旅顺') {
+                    oldTeacher.lvshunCount = Math.max(0, (oldTeacher.lvshunCount || 0) - 1);
+                }
+            }
+            
+            const newTeacher = teachers.find(t => t.name === selectedReplacement.name);
+            if (newTeacher) {
+                newTeacher.totalCount = (newTeacher.totalCount || 0) + 1;
+                if (exam.campus === '旅顺') {
+                    newTeacher.lvshunCount = (newTeacher.lvshunCount || 0) + 1;
+                }
+                newTeacher.lastCampus = exam.campus;
+            }
+            
+            // 更新考试信息
+            const index = exam.invigilators.indexOf(teacherToReplace);
+            if (index > -1) {
+                exam.invigilators[index] = selectedReplacement.name;
+            }
+            
+            // 记录替换历史
+            const replacementRecord = {
+                originalTeacher: teacherToReplace,
+                newTeacher: selectedReplacement.name,
+                reason: reason,
+                timestamp: new Date().toISOString()
+            };
+            
+            // 初始化替换历史数组（如果不存在）
+            if (!exam.replacementHistory) {
+                exam.replacementHistory = [];
+            }
+            
+            // 添加替换记录
+            exam.replacementHistory.push(replacementRecord);
+            
+            // 保存数据
+            saveSemesterData();
+            
+            // 更新UI
+            renderExams();
+            renderTeachers();
+            checkTomorrowExams(); // 更新明天考试提醒
+            
+            // 关闭模态框
+            closeModal();
+            
+            alert('教师替换成功！');
+        }
+        
+        // 显示替换历史记录
+        function showReplacementHistory(index) {
+            const exam = exams[index];
+            
+            // 填充模态框基本信息
+            document.getElementById('history-exam-name').textContent = exam.name;
+            document.getElementById('history-exam-department').textContent = exam.department || '未设置';
+            document.getElementById('history-exam-date').textContent = exam.date;
+            document.getElementById('history-exam-campus').textContent = exam.campus;
+            
+            const historyContainer = document.getElementById('history-container');
+            historyContainer.innerHTML = '';
+            
+            if (!exam.replacementHistory || exam.replacementHistory.length === 0) {
+                historyContainer.innerHTML = '<div class="alert alert-info">暂无替换记录</div>';
+            } else {
+                exam.replacementHistory.forEach((record, idx) => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    historyItem.innerHTML = `
+                        <h4>替换记录 ${idx + 1}</h4>
+                        <p><strong>时间：</strong>${new Date(record.timestamp).toLocaleString()}</p>
+                        <p><strong>原教师：</strong>${record.originalTeacher}</p>
+                        <p><strong>新教师：</strong>${record.newTeacher}</p>
+                        <p><strong>原因：</strong>${record.reason}</p>
+                    `;
+                    historyContainer.appendChild(historyItem);
+                });
+            }
+            
+            // 显示模态框
+            document.getElementById('historyModal').style.display = 'flex';
+        }
+        
+        // 关闭替换历史模态框
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+        
+        // 数据备份功能
+        function backupData() {
+            if (teachers.length === 0 && exams.length === 0) {
+                alert('没有数据可备份');
+                return;
+            }
+            
+            const backupData = {
+                teachers: teachers,
+                exams: exams,
+                semester: currentSemester,
+                backupTime: new Date().toISOString(),
+                systemVersion: '1.0'
+            };
+            
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `监考系统备份_${currentSemester}_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('数据备份成功！');
+        }
+        
+        // 预览恢复数据
+        function previewRestoreData() {
+            const fileInput = document.getElementById('restore-file');
+            const previewContainer = document.getElementById('restore-preview');
+            const restoreBtn = document.getElementById('restore-btn');
+            
+            if (!fileInput.files.length) {
+                previewContainer.style.display = 'none';
+                restoreBtn.disabled = true;
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // 验证数据格式
+                    if (!data.teachers || !data.exams) {
+                        previewContainer.innerHTML = '<div class="alert alert-danger">无效的备份文件格式</div>';
+                        previewContainer.style.display = 'block';
+                        restoreBtn.disabled = true;
+                        return;
+                    }
+                    
+                    restoreFileData = data;
+                    
+                    // 显示预览信息
+                    let html = `
+                        <h4>备份文件预览</h4>
+                        <div class="backup-preview-item">
+                            <strong>备份时间：</strong>${data.backupTime ? new Date(data.backupTime).toLocaleString() : '未知'}
+                        </div>
+                        <div class="backup-preview-item">
+                            <strong>学期：</strong>${data.semester ? semesterData[data.semester].name : '未知'}
+                        </div>
+                        <div class="backup-preview-item">
+                            <strong>教师数量：</strong>${data.teachers.length} 人
+                        </div>
+                        <div class="backup-preview-item">
+                            <strong>监考任务：</strong>${data.exams.length} 个
+                        </div>
+                    `;
+                    
+                    // 如果有教师，显示前几个
+                    if (data.teachers.length > 0) {
+                        html += `<div class="backup-preview-item">
+                            <strong>教师示例：</strong>${data.teachers.slice(0, 5).map(t => t.name).join(', ')}
+                            ${data.teachers.length > 5 ? `... 等 ${data.teachers.length} 人` : ''}
+                        </div>`;
+                    }
+                    
+                    previewContainer.innerHTML = html;
+                    previewContainer.style.display = 'block';
+                    restoreBtn.disabled = false;
+                    
+                } catch (error) {
+                    previewContainer.innerHTML = `<div class="alert alert-danger">文件解析错误：${error.message}</div>`;
+                    previewContainer.style.display = 'block';
+                    restoreBtn.disabled = true;
+                }
+            };
+            
+            reader.onerror = function() {
+                previewContainer.innerHTML = '<div class="alert alert-danger">文件读取失败</div>';
+                previewContainer.style.display = 'block';
+                restoreBtn.disabled = true;
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // 恢复数据
+        function restoreData() {
+            if (!restoreFileData) {
+                alert('请先选择有效的备份文件');
+                return;
+            }
+            
+            if (!confirm('警告：恢复数据将覆盖当前学期所有数据，此操作不可撤销！确定要继续吗？')) {
+                return;
+            }
+            
+            // 验证数据完整性
+            if (!Array.isArray(restoreFileData.teachers) || !Array.isArray(restoreFileData.exams)) {
+                alert('备份文件数据格式错误');
+                return;
+            }
+            
+            try {
+                // 恢复数据
+                teachers = restoreFileData.teachers;
+                exams = restoreFileData.exams;
+                
+                // 保存到本地存储
+                saveSemesterData();
+                
+                // 更新UI
+                renderTeachers();
+                renderTeacherOptions();
+                renderExams();
+                checkTomorrowExams(); // 更新明天考试提醒
+                
+                // 重置恢复状态
+                document.getElementById('restore-file').value = '';
+                document.getElementById('restore-preview').style.display = 'none';
+                document.getElementById('restore-btn').disabled = true;
+                restoreFileData = null;
+                
+                alert('数据恢复成功！');
+                
+            } catch (error) {
+                alert('数据恢复失败：' + error.message);
+            }
+        }
+        
+        // 导出监考数据
+        function exportExamData() {
+            if (teachers.length === 0 && exams.length === 0) {
+                alert('没有监考数据可导出');
+                return;
+            }
+            
+            // 收集所有监考记录
+            const exportData = [];
+            
+            exams.forEach(exam => {
+                exam.invigilators.forEach(teacherName => {
+                    const teacher = teachers.find(t => t.name === teacherName);
+                    if (teacher) {
+                        exportData.push({
+                            '监考教师': teacherName,
+                            '考试部门': exam.department || '未设置',
+                            '考试名称': exam.name,
+                            '考试日期': exam.date,
+                            '校区': exam.campus,
+                            '总次数': teacher.totalCount || 0,
+                            '旅顺次数': teacher.lvshunCount || 0,
+                            '本部次数': (teacher.totalCount || 0) - (teacher.lvshunCount || 0)
+                        });
+                    }
+                });
+            });
+            
+            if (exportData.length === 0) {
+                alert('没有监考数据可导出');
+                return;
+            }
+            
+            exportToExcel(exportData, `监考数据_${currentSemester}`);
+        }
+        
+        // 通用Excel导出函数
+        function exportToExcel(data, fileName) {
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+            XLSX.writeFile(workbook, `${fileName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+    </script>
+</body>
+</html>
